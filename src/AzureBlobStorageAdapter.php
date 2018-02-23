@@ -18,6 +18,8 @@ use MicrosoftAzure\Storage\Blob\Models\CreateBlockBlobOptions;
 use MicrosoftAzure\Storage\Blob\Models\ListBlobsOptions;
 use MicrosoftAzure\Storage\Common\Exceptions\ServiceException;
 use function stream_get_contents;
+use function strpos;
+use function var_dump;
 
 class AzureBlobStorageAdapter extends AbstractAdapter
 {
@@ -189,7 +191,9 @@ class AzureBlobStorageAdapter extends AbstractAdapter
         $result = [];
         $response =  $this->client->listBlobs($this->container, $options);
         foreach ($response->getBlobs() as $blob) {
-            $result[] = $this->normalizeBlobProperties($blob->getName(), $blob->getProperties());
+            if (strpos($name = $blob->getName(), $location) === 0) {
+                $result[] = $this->normalizeBlobProperties($name, $blob->getProperties());
+            }
         }
 
         if ( ! $recursive) {
