@@ -97,7 +97,7 @@ class AzureBlobStorageAdapter extends AbstractAdapter
     {
         $source = $this->applyPathPrefix($path);
         $destination = $this->applyPathPrefix($newpath);
-        $this->client->copyBlob($this->container, $source, $this->container, $destination);
+        $this->client->copyBlob($this->container, $destination, $this->container, $source);
 
         return true;
     }

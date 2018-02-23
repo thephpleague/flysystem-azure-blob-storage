@@ -77,6 +77,17 @@ class AzureBlobStorageTest extends TestCase
         $this->assertFalse($this->filesystem->has('directory/filename.txt'));
     }
 
+    /**
+     * @test
+     */
+    public function copying_files()
+    {
+        $this->assertNotFalse($this->filesystem->write('source.txt', 'contents'));
+        $this->filesystem->copy('source.txt', 'destination.txt');
+        $this->assertTrue($this->filesystem->has('destination.txt'));
+        $this->assertEquals('contents', $this->filesystem->read('destination.txt'));
+    }
+
 
     /**
      * @after
