@@ -33,4 +33,17 @@ class AzureBlobStorageTest extends TestCase
         $this->assertEquals($contents, $this->filesystem->read($filename));
         $this->assertTrue($this->filesystem->delete($filename));
     }
+
+    public function writing_and_reading_a_stream()
+    {
+        $contents = 'with contents';
+        $filename = 'a_file.txt';
+        $handle = tmpfile();
+        fwrite($handle, $contents);
+        $this->assertTrue($this->filesystem->writeStream($filename, $handle));
+        is_resource($handle) && fclose($handle);
+        $handle = $this->filesystem->readStream($filename);
+        $this->assertInternalType('resource', $handle);
+        $this->assertEquals($contents, stream_get_contents($handle));
+    }
 }
