@@ -1,0 +1,24 @@
+
+services:
+  - docker
+
+language: php
+
+php:
+  - 5.6
+  - 7.0
+  - 7.1
+  - 7.2
+
+
+install:
+  - docker run -e executable=blob --name azureblob -d -t -p 10000:10000 arafato/azurite
+  - curl -X PUT -H "$x_ms_date_h" -H "$x_ms_version_h" -H "Content-Length: 0" -H "$authorization_header" "http://0.0.0.0:10000/devstoreaccount1/mycontainer?restype=container"
+  - travis_retry composer install --prefer-dist
+
+script:
+  - vendor/bin/phpunit
+
+#after_script:
+#  - wget https://scrutinizer-ci.com/ocular.phar
+#  - php ocular.phar code-coverage:upload --format=php-clover coverage.xml

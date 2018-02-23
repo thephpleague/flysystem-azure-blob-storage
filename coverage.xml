@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<coverage generated="1519391081">
+  <project timestamp="1519391081">
+    <package name="League\Flysystem\AzureBlobStorage">
+      <file name="/Users/frankdejonge/Sites/flysystem-azure-blob-storage/src/AzureBlobStorageAdapter.php">
+        <class name="AzureBlobStorageAdapter" namespace="League\Flysystem\AzureBlobStorage">
+          <metrics complexity="41" methods="22" coveredmethods="4" conditionals="0" coveredconditionals="0" statements="97" coveredstatements="51" elements="119" coveredelements="55"/>
+        </class>
+        <line num="44" type="method" name="__construct" visibility="public" complexity="1" crap="1" count="1"/>
+        <line num="46" type="stmt" count="1"/>
+        <line num="47" type="stmt" count="1"/>
+        <line num="48" type="stmt" count="1"/>
+        <line num="49" type="stmt" count="1"/>
+        <line num="51" type="method" name="write" visibility="public" complexity="1" crap="1" count="1"/>
+        <line num="53" type="stmt" count="1"/>
+        <line num="56" type="method" name="writeStream" visibility="public" complexity="1" crap="2" count="0"/>
+        <line num="58" type="stmt" count="0"/>
+        <line num="61" type="method" name="upload" visibility="protected" complexity="2" crap="2" count="1"/>
+        <line num="63" type="stmt" count="1"/>
+        <line num="64" type="stmt" count="1"/>
+        <line num="65" type="stmt" count="1"/>
+        <line num="66" type="stmt" count="1"/>
+        <line num="67" type="stmt" count="1"/>
+        <line num="68" type="stmt" count="1"/>
+        <line num="72" type="stmt" count="1"/>
+        <line num="73" type="stmt" count="1"/>
+        <line num="74" type="stmt" count="1"/>
+        <line num="75" type="stmt" count="1"/>
+        <line num="76" type="stmt" count="1"/>
+        <line num="79" type="method" name="update" visibility="public" complexity="1" crap="2" count="0"/>
+        <line num="81" type="stmt" count="0"/>
+        <line num="84" type="method" name="updateStream" visibility="public" complexity="1" crap="2" count="0"/>
+        <line num="86" type="stmt" count="0"/>
+        <line num="89" type="method" name="rename" visibility="public" complexity="2" crap="6" count="0"/>
+        <line num="91" type="stmt" count="0"/>
+        <line num="94" type="method" name="copy" visibility="public" complexity="1" crap="2" count="0"/>
+        <line num="96" type="stmt" count="0"/>
+        <line num="97" type="stmt" count="0"/>
+        <line num="98" type="stmt" count="0"/>
+        <line num="100" type="stmt" count="0"/>
+        <line num="103" type="method" name="delete" visibility="public" complexity="3" crap="4.94" count="1"/>
+        <line num="106" type="stmt" count="1"/>
+        <line num="107" type="stmt" count="0"/>
+        <line num="108" type="stmt" count="0"/>
+        <line num="109" type="stmt" count="0"/>
+        <line num="113" type="stmt" count="1"/>
+        <line num="116" type="method" name="deleteDir" visibility="public" complexity="2" crap="6" count="0"/>
+        <line num="118" type="stmt" count="0"/>
+        <line num="119" type="stmt" count="0"/>
+        <line num="120" type="stmt" count="0"/>
+        <line num="121" type="stmt" count="0"/>
+        <line num="122" type="stmt" count="0"/>
+        <line num="123" type="stmt" count="0"/>
+        <line num="126" type="stmt" count="0"/>
+        <line num="129" type="method" name="createDir" visibility="public" complexity="1" crap="2" count="0"/>
+        <line num="131" type="stmt" count="0"/>
+        <line num="134" type="method" name="has" visibility="public" complexity="1" crap="1" count="1"/>
+        <line num="136" type="stmt" count="1"/>
+        <line num="139" type="method" name="read" visibility="public" complexity="3" crap="3.04" count="1"/>
+        <line num="141" type="stmt" count="1"/>
+        <line num="143" type="stmt" count="1"/>
+        <line num="144" type="stmt" count="0"/>
+        <line num="147" type="stmt" count="1"/>
+        <line num="148" type="stmt" count="1"/>
+        <line num="150" type="stmt" count="1"/>
+        <line num="153" type="method" name="readStream" visibility="public" complexity="3" crap="3.58" count="1"/>
+        <line num="155" type="stmt" count="1"/>
+        <line num="158" type="stmt" count="1"/>
+        <line num="159" type="stmt" count="1"/>
+        <line num="160" type="stmt" count="1"/>
+        <line num="163" type="stmt" count="1"/>
+        <line num="164" type="stmt" count="1"/>
+        <line num="165" type="stmt" count="0"/>
+        <line num="166" type="stmt" count="0"/>
+        <line num="167" type="stmt" count="0"/>
+        <line num="170" type="stmt" count="0"/>
+        <line num="174" type="method" name="listContents" visibility="public" complexity="5" crap="30" count="0"/>
+        <line num="176" type="stmt" count="0"/>
+        <line num="178" type="stmt" count="0"/>
+        <line num="179" type="stmt" count="0"/>
+        <line num="182" type="stmt" count="0"/>
+        <line num="183" type="stmt" count="0"/>
+        <line num="185" type="stmt" count="0"/>
+        <line num="186" type="stmt" count="0"/>
+        <line num="189" type="stmt" count="0"/>
+        <line num="190" type="stmt" count="0"/>
+        <line num="191" type="stmt" count="0"/>
+        <line num="192" type="stmt" count="0"/>
+        <line num="195" type="stmt" count="0"/>
+        <line num="196" type="stmt" count="0"/>
+        <line num="199" type="stmt" count="0"/>
+        <line num="202" type="method" name="getMetadata" visibility="public" complexity="3" crap="3.02" count="1"/>
+        <line num="204" type="stmt" count="1"/>
+        <line num="207" type="stmt" count="1"/>
+        <line num="208" type="stmt" count="1"/>
+        <line num="209" type="stmt" count="1"/>
+        <line num="211" type="stmt" count="1"/>
+        <line num="212" type="stmt" count="1"/>
+        <line num="213" type="stmt" count="0"/>
+        <line num="216" type="stmt" count="1"/>
+        <line num="220" type="method" name="getSize" visibility="public" complexity="1" crap="2" count="0"/>
+        <line num="222" type="stmt" count="0"/>
+        <line num="225" type="method" name="getMimetype" visibility="public" complexity="1" crap="2" count="0"/>
+        <line num="227" type="stmt" count="0"/>
+        <line num="230" type="method" name="getTimestamp" visibility="public" complexity="1" crap="2" count="0"/>
+        <line num="232" type="stmt" count="0"/>
+        <line num="235" type="method" name="getOptionsFromConfig" visibility="protected" complexity="4" crap="4.25" count="1"/>
+        <line num="237" type="stmt" count="1"/>
+        <line num="238" type="stmt" count="1"/>
+        <line num="239" type="stmt" count="1"/>
+        <line num="240" type="stmt" count="1"/>
+        <line num="242" type="stmt" count="0"/>
+        <line num="244" type="stmt" count="1"/>
+        <line num="245" type="stmt" count="0"/>
+        <line num="247" type="stmt" count="1"/>
+        <line num="250" type="method" name="normalizeBlobProperties" visibility="protected" complexity="2" crap="2.01" count="1"/>
+        <line num="252" type="stmt" count="1"/>
+        <line num="254" type="stmt" count="1"/>
+        <line num="255" type="stmt" count="0"/>
+        <line num="258" type="stmt" count="1"/>
+        <line num="259" type="stmt" count="1"/>
+        <line num="260" type="stmt" count="1"/>
+        <line num="261" type="stmt" count="1"/>
+        <line num="262" type="stmt" count="1"/>
+        <line num="263" type="stmt" count="1"/>
+        <line num="267" type="method" name="normalizeBlobPrefix" visibility="protected" complexity="1" crap="2" count="0"/>
+        <line num="269" type="stmt" count="0"/>
+        <metrics loc="270" ncloc="264" classes="1" methods="22" coveredmethods="4" conditionals="0" coveredconditionals="0" statements="97" coveredstatements="51" elements="119" coveredelements="55"/>
+      </file>
+    </package>
+    <metrics files="1" loc="270" ncloc="264" classes="1" methods="22" coveredmethods="4" conditionals="0" coveredconditionals="0" statements="97" coveredstatements="51" elements="119" coveredelements="55"/>
+  </project>
+</coverage>
