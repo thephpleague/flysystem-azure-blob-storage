@@ -1,5 +1,7 @@
 <?php
 
+namespace League\Flysystem\AzureBlobStorage\Test;
+
 use League\Flysystem\AzureBlobStorage\AzureBlobStorageAdapter;
 use League\Flysystem\Filesystem;
 use MicrosoftAzure\Storage\Blob\BlobRestProxy;

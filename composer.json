@@ -6,6 +6,11 @@
             "League\\Flysystem\\AzureBlobStorage\\": "src/"
         }
     },
+    "autoload-dev": {
+        "psr-4": {
+            "League\\Flysystem\\AzureBlobStorage\\Test\\": "tests/"
+        }
+    },
     "require": {
         "php": ">=5.6",
         "league/flysystem": "^1.0",
