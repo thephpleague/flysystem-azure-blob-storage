@@ -9,7 +9,6 @@ php:
 
 install:
   - travis_retry composer install --prefer-dist
-  - sleep 15
 
 script:
   - vendor/bin/phpunit
