@@ -1,5 +1,5 @@
 {
-    "name": "league/flysystem-azure-blog-storage",
+    "name": "league/flysystem-azure-blob-storage",
     "autoload": {
         "psr-4": {
             "League\\Flysystem\\AzureBlobStorage\\": "src/"
@@ -8,7 +8,7 @@
     "require": {
         "php": ">=5.6",
         "league/flysystem": "^1.0",
-        "microsoft/azure-storage-blob": "^1.0",
+        "microsoft/azure-storage-blob": "^1.1",
         "phpunit/phpunit": "^5.7"
     },
     "license": "MIT",
