@@ -185,6 +185,10 @@ class AzureBlobStorageTest extends TestCase
      */
     public function cleanup_files()
     {
+        if ($this->filesystem === null) {
+            return;
+        }
+
         $files = $this->filesystem->listContents('', true);
 
         foreach ($files as $file) {
