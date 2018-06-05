@@ -147,6 +147,18 @@ class AzureBlobStorageTest extends TestCase
     /**
      * @test
      */
+    public function metadata_getters()
+    {
+        $this->filesystem->write('file.txt', 'contents');
+        $this->assertInternalType('int', $this->filesystem->getTimestamp('file.txt'));
+        $this->assertInternalType('array', $this->filesystem->getMetadata('file.txt'));
+        $this->assertInternalType('int', $this->filesystem->getSize('file.txt'));
+        $this->assertInternalType('string', $this->filesystem->getMimetype('file.txt'));
+    }
+
+    /**
+     * @test
+     */
     public function renaming_a_file()
     {
         $this->filesystem->write('path/to/file.txt', 'contents');
