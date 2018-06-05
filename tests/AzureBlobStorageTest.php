@@ -17,7 +17,6 @@ class AzureBlobStorageTest extends TestCase
      */
     public function setup_filesystem()
     {
-
         $client = BlobRestProxy::createBlobService(getenv('FLYSYSTEM_AZURE_CONNECTION_STRING'));
         $adapter = new AzureBlobStorageAdapter($client, 'flysystem', 'root_directory');
         $this->filesystem = new Filesystem($adapter);
