@@ -1,7 +1,3 @@
-
-services:
-  - docker
-
 language: php
 
 php:

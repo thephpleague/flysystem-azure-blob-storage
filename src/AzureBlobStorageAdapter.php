@@ -2,10 +2,7 @@
 
 namespace League\Flysystem\AzureBlobStorage;
 
-use function array_merge;
-use function compact;
 use GuzzleHttp\Exception\ServerException;
-use function is_string;
 use League\Flysystem\Adapter\AbstractAdapter;
 use League\Flysystem\Adapter\Polyfill\NotSupportingVisibilityTrait;
 use League\Flysystem\Config;
@@ -13,13 +10,14 @@ use League\Flysystem\Util;
 use MicrosoftAzure\Storage\Blob\BlobRestProxy;
 use MicrosoftAzure\Storage\Blob\Models\BlobPrefix;
 use MicrosoftAzure\Storage\Blob\Models\BlobProperties;
-use MicrosoftAzure\Storage\Blob\Models\CreateBlobOptions;
 use MicrosoftAzure\Storage\Blob\Models\CreateBlockBlobOptions;
 use MicrosoftAzure\Storage\Blob\Models\ListBlobsOptions;
 use MicrosoftAzure\Storage\Common\Exceptions\ServiceException;
+use function array_merge;
+use function compact;
+use function is_string;
 use function stream_get_contents;
 use function strpos;
-use function var_dump;
 
 class AzureBlobStorageAdapter extends AbstractAdapter
 {
@@ -71,11 +69,11 @@ class AzureBlobStorageAdapter extends AbstractAdapter
         );
 
         return [
-            'path' => $path,
-            'timestamp' => (int) $response->getLastModified()->getTimestamp(),
-            'dirname' => Util::dirname($path),
-            'type' => 'file',
-        ] + (is_string($contents) ? compact('contents') : []);
+                'path'      => $path,
+                'timestamp' => (int) $response->getLastModified()->getTimestamp(),
+                'dirname'   => Util::dirname($path),
+                'type'      => 'file',
+            ] + (is_string($contents) ? compact('contents') : []);
     }
 
     public function update($path, $contents, Config $config)
@@ -189,7 +187,7 @@ class AzureBlobStorageAdapter extends AbstractAdapter
         }
 
         $result = [];
-        $response =  $this->client->listBlobs($this->container, $options);
+        $response = $this->client->listBlobs($this->container, $options);
         foreach ($response->getBlobs() as $blob) {
             if (strpos($name = $blob->getName(), $location) === 0) {
                 $result[] = $this->normalizeBlobProperties($name, $blob->getProperties());
@@ -248,6 +246,7 @@ class AzureBlobStorageAdapter extends AbstractAdapter
         if ($mimetype = $config->get('mimetype')) {
             $options->setContentType($mimetype);
         }
+
         return $options;
     }
 
@@ -258,13 +257,14 @@ class AzureBlobStorageAdapter extends AbstractAdapter
         if (substr($path, -1) === '/') {
             return ['type' => 'dir', 'path' => rtrim($path, '/')];
         }
+
         return [
-            'path' => $path,
+            'path'      => $path,
             'timestamp' => (int) $properties->getLastModified()->format('U'),
-            'dirname' => Util::dirname($path),
-            'mimetype' => $properties->getContentType(),
-            'size' => $properties->getContentLength(),
-            'type' => 'file',
+            'dirname'   => Util::dirname($path),
+            'mimetype'  => $properties->getContentType(),
+            'size'      => $properties->getContentLength(),
+            'type'      => 'file',
         ];
     }
 
