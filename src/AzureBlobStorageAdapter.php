@@ -140,7 +140,7 @@ class AzureBlobStorageAdapter extends AbstractAdapter
     {
         $response = $this->readStream($path);
 
-        if ( ! isset($response['stream']) || ! is_resource($response['stream'])) {
+        if (! isset($response['stream']) || ! is_resource($response['stream'])) {
             return $response;
         }
 
@@ -182,7 +182,7 @@ class AzureBlobStorageAdapter extends AbstractAdapter
         $options = new ListBlobsOptions();
         $options->setPrefix($location);
 
-        if ( ! $recursive) {
+        if (! $recursive) {
             $options->setDelimiter('/');
         }
 
@@ -194,7 +194,7 @@ class AzureBlobStorageAdapter extends AbstractAdapter
             }
         }
 
-        if ( ! $recursive) {
+        if (! $recursive) {
             $result = array_merge($result, array_map([$this, 'normalizeBlobPrefix'], $response->getBlobPrefixes()));
         }
 
@@ -238,7 +238,7 @@ class AzureBlobStorageAdapter extends AbstractAdapter
     {
         $options = new CreateBlockBlobOptions();
         foreach (static::$metaOptions as $option) {
-            if ( ! $config->has($option)) {
+            if (! $config->has($option)) {
                 continue;
             }
             call_user_func([$options, "set$option"], $config->get($option));

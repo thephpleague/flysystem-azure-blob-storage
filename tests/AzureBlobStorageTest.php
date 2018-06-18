@@ -1,5 +1,7 @@
 <?php
 
+namespace League\Flysystem\AzureBlobStorage\Test;
+
 use League\Flysystem\AzureBlobStorage\AzureBlobStorageAdapter;
 use League\Flysystem\Filesystem;
 use MicrosoftAzure\Storage\Blob\BlobRestProxy;
@@ -192,9 +194,11 @@ class AzureBlobStorageTest extends TestCase
         $files = $this->filesystem->listContents('', true);
 
         foreach ($files as $file) {
-            if ($file['type'] === 'dir') continue;
+            if ($file['type'] === 'dir') {
+                continue;
+            };
+
             $this->filesystem->delete($file['path']);
         }
     }
-
 }

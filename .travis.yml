@@ -8,7 +8,7 @@ php:
 
 
 install:
-  - travis_retry composer install --prefer-dist
+  - ./install-dependencies.sh
 
 script:
   - vendor/bin/phpunit
