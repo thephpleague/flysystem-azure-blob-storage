@@ -189,7 +189,9 @@ class AzureBlobStorageAdapter extends AbstractAdapter
         $result = [];
         $response = $this->client->listBlobs($this->container, $options);
         foreach ($response->getBlobs() as $blob) {
-            if (strpos($name = $blob->getName(), $location) === 0) {
+            $name = $blob->getName();
+
+            if ($location === '' || strpos($name, $location) === 0) {
                 $result[] = $this->normalizeBlobProperties($name, $blob->getProperties());
             }
         }
