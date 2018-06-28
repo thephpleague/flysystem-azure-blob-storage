@@ -11,6 +11,11 @@
          syntaxCheck="true"
          verbose="true"
 >
+    <php>
+        <env name="FLYSYSTEM_AZURE_CONNECTION_STRING"
+             value="DefaultEndpointsProtocol=..."
+        />
+    </php>
     <testsuites>
         <testsuite name="flysystem/tests">
             <directory suffix="Test.php">./tests/</directory>
