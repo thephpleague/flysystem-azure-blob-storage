@@ -13,9 +13,11 @@ use MicrosoftAzure\Storage\Blob\Models\BlobProperties;
 use MicrosoftAzure\Storage\Blob\Models\CreateBlockBlobOptions;
 use MicrosoftAzure\Storage\Blob\Models\ListBlobsOptions;
 use MicrosoftAzure\Storage\Common\Exceptions\ServiceException;
+use MicrosoftAzure\Storage\Blob\BlobSharedAccessSignatureHelper;
 use function array_merge;
 use function compact;
 use function is_string;
+use MicrosoftAzure\Storage\Common\Internal\Resources;
 use function stream_get_contents;
 use function strpos;
 
@@ -39,12 +41,27 @@ class AzureBlobStorageAdapter extends AbstractAdapter
      */
     private $client;
 
+    /**
+     * @var string
+     */
     private $container;
 
-    public function __construct(BlobRestProxy $client, $container, $prefix = null)
+    /**
+     * @var string
+     */
+    private $baseUrl;
+
+    /**
+     * @var string
+     */
+    private $accountKey;
+
+    public function __construct(BlobRestProxy $client, $container, $prefix = null, $accountKey = null, $baseUrl = null)
     {
         $this->client = $client;
         $this->container = $container;
+        $this->baseUrl = $baseUrl;
+        $this->accountKey = $accountKey;
         $this->setPathPrefix($prefix);
     }
 
@@ -250,6 +267,38 @@ class AzureBlobStorageAdapter extends AbstractAdapter
         }
 
         return $options;
+    }
+
+    public function getTemporaryUrl($path, $ttl, $options)
+    {
+        $sas = new BlobSharedAccessSignatureHelper($this->client->getAccountName(), $this->accountKey);
+        $sasString = $sas->generateBlobServiceSharedAccessSignatureToken(
+            Resources::RESOURCE_TYPE_BLOB
+            , $this->container . '/' . $path
+            , 'r'
+            , $ttl
+            , ''
+            , ''
+            , 'https');
+
+        return $this->getUrl($path, sprintf('?%s', $sasString));
+    }
+
+    public function getUrl($path, $sasKey = '')
+    {
+        if ( ! empty($this->baseUrl)) {
+            return sprintf('%s/%s/%s%s'
+                , $this->baseUrl
+                , $this->container
+                , $path
+                , $sasKey);
+        }
+
+        return sprintf('https://%s.blob.core.windows.net/%s/%s%s'
+            , $this->client->getAccountName()
+            , $this->container
+            , $path
+            , $sasKey);
     }
 
     protected function normalizeBlobProperties($path, BlobProperties $properties)
