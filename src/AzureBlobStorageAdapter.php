@@ -16,6 +16,7 @@ use MicrosoftAzure\Storage\Common\Exceptions\ServiceException;
 use function array_merge;
 use function compact;
 use function is_string;
+use MicrosoftAzure\Storage\Common\Models\ContinuationToken;
 use function stream_get_contents;
 use function strpos;
 
@@ -40,6 +41,8 @@ class AzureBlobStorageAdapter extends AbstractAdapter
     private $client;
 
     private $container;
+
+    private $maxResultsForContentsListing = 5000;
 
     public function __construct(BlobRestProxy $client, $container, $prefix = null)
     {
@@ -173,6 +176,7 @@ class AzureBlobStorageAdapter extends AbstractAdapter
 
     public function listContents($directory = '', $recursive = false)
     {
+        $result = [];
         $location = $this->applyPathPrefix($directory);
 
         if (strlen($location) > 0) {
@@ -181,13 +185,15 @@ class AzureBlobStorageAdapter extends AbstractAdapter
 
         $options = new ListBlobsOptions();
         $options->setPrefix($location);
+        $options->setMaxResults($this->maxResultsForContentsListing);
 
         if ( ! $recursive) {
             $options->setDelimiter('/');
         }
 
-        $result = [];
+        list_contents:
         $response = $this->client->listBlobs($this->container, $options);
+        $continuationToken = $response->getContinuationToken();
         foreach ($response->getBlobs() as $blob) {
             $name = $blob->getName();
 
@@ -198,6 +204,11 @@ class AzureBlobStorageAdapter extends AbstractAdapter
 
         if ( ! $recursive) {
             $result = array_merge($result, array_map([$this, 'normalizeBlobPrefix'], $response->getBlobPrefixes()));
+        }
+
+        if ($continuationToken instanceof ContinuationToken) {
+            $options->setContinuationToken($continuationToken);
+            goto list_contents;
         }
 
         return Util::emulateDirectories($result);
@@ -268,6 +279,14 @@ class AzureBlobStorageAdapter extends AbstractAdapter
             'size'      => $properties->getContentLength(),
             'type'      => 'file',
         ];
+    }
+
+    /**
+     * @param int $numberOfResults
+     */
+    public function setMaxResultsForContentsListing($numberOfResults)
+    {
+        $this->maxResultsForContentsListing = $numberOfResults;
     }
 
     protected function normalizeBlobPrefix(BlobPrefix $blobPrefix)

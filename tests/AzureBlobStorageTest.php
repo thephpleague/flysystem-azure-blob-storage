@@ -13,6 +13,11 @@ class AzureBlobStorageTest extends TestCase
     protected $filesystem;
 
     /**
+     * @var AzureBlobStorageAdapter
+     */
+    private $adapter;
+
+    /**
      * @before
      */
     public function setup_filesystem()
@@ -21,6 +26,7 @@ class AzureBlobStorageTest extends TestCase
         $adapter = new AzureBlobStorageAdapter($client, 'flysystem', 'root_directory');
         $this->filesystem = new Filesystem($adapter);
         $this->filesystem->getConfig()->set('disable_asserts', true);
+        $this->adapter = $adapter;
     }
 
     /**
@@ -137,10 +143,12 @@ class AzureBlobStorageTest extends TestCase
      */
     public function listing_a_directory()
     {
+        $this->adapter->setMaxResultsForContentsListing(1);
         $this->filesystem->write('path/to/file.txt', 'a file');
         $this->filesystem->write('path/to/another/file.txt', 'a file');
         $this->assertCount(2, $this->filesystem->listContents('path/to'));
         $this->assertCount(3, $this->filesystem->listContents('path/to', true));
+        $this->assertCount(4, $this->filesystem->listContents('path', true));
     }
 
     /**
