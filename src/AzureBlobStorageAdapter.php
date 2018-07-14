@@ -2,7 +2,6 @@
 
 namespace League\Flysystem\AzureBlobStorage;
 
-use GuzzleHttp\Exception\ServerException;
 use League\Flysystem\Adapter\AbstractAdapter;
 use League\Flysystem\Adapter\Polyfill\NotSupportingVisibilityTrait;
 use League\Flysystem\Config;
@@ -13,12 +12,12 @@ use MicrosoftAzure\Storage\Blob\Models\BlobProperties;
 use MicrosoftAzure\Storage\Blob\Models\CreateBlockBlobOptions;
 use MicrosoftAzure\Storage\Blob\Models\ListBlobsOptions;
 use MicrosoftAzure\Storage\Common\Exceptions\ServiceException;
+use MicrosoftAzure\Storage\Common\Models\ContinuationToken;
 use function array_merge;
 use function compact;
-use function is_string;
-use MicrosoftAzure\Storage\Common\Models\ContinuationToken;
 use function stream_get_contents;
 use function strpos;
+use function var_dump;
 
 class AzureBlobStorageAdapter extends AbstractAdapter
 {
@@ -53,7 +52,7 @@ class AzureBlobStorageAdapter extends AbstractAdapter
 
     public function write($path, $contents, Config $config)
     {
-        return $this->upload($path, $contents, $config);
+        return $this->upload($path, $contents, $config) + compact('contents');
     }
 
     public function writeStream($path, $resource, Config $config)
@@ -72,16 +71,16 @@ class AzureBlobStorageAdapter extends AbstractAdapter
         );
 
         return [
-                'path'      => $path,
-                'timestamp' => (int) $response->getLastModified()->getTimestamp(),
-                'dirname'   => Util::dirname($path),
-                'type'      => 'file',
-            ] + (is_string($contents) ? compact('contents') : []);
+            'path'      => $path,
+            'timestamp' => (int) $response->getLastModified()->getTimestamp(),
+            'dirname'   => Util::dirname($path),
+            'type'      => 'file',
+        ];
     }
 
     public function update($path, $contents, Config $config)
     {
-        return $this->upload($path, $contents, $config);
+        return $this->upload($path, $contents, $config) + compact('contents');
     }
 
     public function updateStream($path, $resource, Config $config)
@@ -107,7 +106,7 @@ class AzureBlobStorageAdapter extends AbstractAdapter
     {
         try {
             $this->client->deleteBlob($this->container, $this->applyPathPrefix($path));
-        } catch (ServerException $exception) {
+        } catch (ServiceException $exception) {
             if ($exception->getCode() !== 404) {
                 throw $exception;
             }

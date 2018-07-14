@@ -1,8 +1,11 @@
 <?php
 
+use GuzzleHttp\Middleware;
+use GuzzleHttp\Psr7\Response;
 use League\Flysystem\AzureBlobStorage\AzureBlobStorageAdapter;
 use League\Flysystem\Filesystem;
 use MicrosoftAzure\Storage\Blob\BlobRestProxy;
+use MicrosoftAzure\Storage\Common\Exceptions\ServiceException;
 use PHPUnit\Framework\TestCase;
 
 class AzureBlobStorageTest extends TestCase
@@ -18,11 +21,16 @@ class AzureBlobStorageTest extends TestCase
     private $adapter;
 
     /**
+     * @var BlobRestProxy
+     */
+    private $azureClient;
+
+    /**
      * @before
      */
     public function setup_filesystem()
     {
-        $client = BlobRestProxy::createBlobService(getenv('FLYSYSTEM_AZURE_CONNECTION_STRING'));
+        $this->azureClient = $client = BlobRestProxy::createBlobService(getenv('FLYSYSTEM_AZURE_CONNECTION_STRING'));
         $adapter = new AzureBlobStorageAdapter($client, 'flysystem', 'root_directory');
         $this->filesystem = new Filesystem($adapter);
         $this->filesystem->getConfig()->set('disable_asserts', true);
@@ -47,6 +55,16 @@ class AzureBlobStorageTest extends TestCase
     public function read_errors()
     {
         $this->assertFalse($this->filesystem->read('not-existing.txt'));
+    }
+
+    /**
+     * @test
+     */
+    public function read_exceptions()
+    {
+        $this->expectException(ServiceException::class);
+        $this->throwServiceException();
+        $this->adapter->read('not-existing.txt');
     }
 
     /**
@@ -111,12 +129,31 @@ class AzureBlobStorageTest extends TestCase
     /**
      * @test
      */
-    public function deleting_an_checking_file_existence()
+    public function deleting_and_checking_file_existence()
     {
         $this->filesystem->write('directory/filename.txt', 'contents');
         $this->assertNotFalse($this->filesystem->has('directory/filename.txt'));
         $this->assertTrue($this->filesystem->delete('directory/filename.txt'));
         $this->assertFalse($this->filesystem->has('directory/filename.txt'));
+    }
+
+    /**
+     * @test
+     */
+    public function deleting_files_that_dont_exist()
+    {
+        $this->assertTrue($this->filesystem->delete('nonexisting/filename.txt'));
+    }
+
+    /**
+     * @test
+     */
+    public function errors_during_deletes()
+    {
+        $this->expectException(ServiceException::class);
+        $this->throwServiceException();
+
+        $this->adapter->delete('something.txt');
     }
 
     /**
@@ -203,6 +240,16 @@ class AzureBlobStorageTest extends TestCase
             if ($file['type'] === 'dir') continue;
             $this->filesystem->delete($file['path']);
         }
+    }
+
+    protected function throwServiceException(): void
+    {
+        $this->filesystem = null;
+        $this->azureClient->pushMiddleware(function () {
+            return function () {
+                throw new ServiceException(new Response(500, [], 'ERROR'));
+            };
+        });
     }
 
 }
