@@ -242,7 +242,7 @@ class AzureBlobStorageTest extends TestCase
         }
     }
 
-    protected function throwServiceException(): void
+    protected function throwServiceException()
     {
         $this->filesystem = null;
         $this->azureClient->pushMiddleware(function () {
