@@ -2,6 +2,8 @@
 
 namespace League\Flysystem\AzureBlobStorage;
 
+use GuzzleHttp\Psr7\Stream;
+use function GuzzleHttp\Psr7\stream_for;
 use League\Flysystem\Adapter\AbstractAdapter;
 use League\Flysystem\Adapter\Polyfill\NotSupportingVisibilityTrait;
 use League\Flysystem\Config;
@@ -63,12 +65,22 @@ class AzureBlobStorageAdapter extends AbstractAdapter
     protected function upload($path, $contents, Config $config)
     {
         $destination = $this->applyPathPrefix($path);
+
+        /**
+         * We manually create the Stream to prevent it from closing the resource in its destructor.
+         */
+
+        /** @var Stream $stream */
+        $stream = stream_for($contents);
+
         $response = $this->client->createBlockBlob(
             $this->container,
             $destination,
             $contents,
             $this->getOptionsFromConfig($config)
         );
+
+        $stream->detach();
 
         return [
             'path'      => $path,
