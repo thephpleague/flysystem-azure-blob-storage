@@ -13,11 +13,6 @@ use MicrosoftAzure\Storage\Blob\Models\CreateBlockBlobOptions;
 use MicrosoftAzure\Storage\Blob\Models\ListBlobsOptions;
 use MicrosoftAzure\Storage\Common\Exceptions\ServiceException;
 use MicrosoftAzure\Storage\Common\Models\ContinuationToken;
-use function array_merge;
-use function compact;
-use function stream_get_contents;
-use function strpos;
-use function var_dump;
 
 class AzureBlobStorageAdapter extends AbstractAdapter
 {
@@ -130,6 +125,14 @@ class AzureBlobStorageAdapter extends AbstractAdapter
 
     public function createDir($dirname, Config $config)
     {
+        /**
+         * We need to do this recursively, if we don't directory checks will return unintuitive results.
+         * Since we emulate directories, this should always hold: is_dir('a/b/c') => is_dir('a/b').
+         */
+        do {
+            $this->write(rtrim($dirname, '/') . '/', 'directory placeholder', $config);
+            $dirname = dirname($dirname);
+        } while ($dirname !== '.');
         return ['path' => $dirname, 'type' => 'dir'];
     }
 
@@ -226,7 +229,11 @@ class AzureBlobStorageAdapter extends AbstractAdapter
             if ($exception->getCode() !== 404) {
                 throw $exception;
             }
-
+            // If the path does not exist try the directory
+            if (substr($path, -1) !== '/') {
+                $result = $this->getMetadata($path . '/');
+                return $result;
+            }
             return false;
         }
     }
