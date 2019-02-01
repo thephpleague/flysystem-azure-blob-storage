@@ -1,6 +1,5 @@
 <?php
 
-use GuzzleHttp\Middleware;
 use GuzzleHttp\Psr7\Response;
 use League\Flysystem\AzureBlobStorage\AzureBlobStorageAdapter;
 use League\Flysystem\Filesystem;
