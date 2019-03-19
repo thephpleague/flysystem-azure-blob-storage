@@ -256,7 +256,7 @@ class AzureBlobStorageAdapter extends AbstractAdapter
 
     protected function getOptionsFromConfig(Config $config)
     {
-        $options = new CreateBlockBlobOptions();
+        $options = $config->get('blobOptions', new CreateBlockBlobOptions());
         foreach (static::$metaOptions as $option) {
             if ( ! $config->has($option)) {
                 continue;

@@ -223,6 +223,25 @@ class AzureBlobStorageTest extends TestCase
 
     }
 
+    /**
+     * @test
+     */
+    public function pass_blob_options()
+    {
+        $blobOptions = new \MicrosoftAzure\Storage\Blob\Models\CreateBlobOptions();
+        $blobOptions->setContentType('text/plain');
+        $this->filesystem->write('path/to/file.txt', 'contents', [
+            'blobOptions' => $blobOptions
+        ]);
+        $this->assertEquals('text/plain', $this->azureClient->getBlobProperties('flysystem', 'path/to/file.txt')->getProperties()->getContentType());
+        $blobOptions = new \MicrosoftAzure\Storage\Blob\Models\CreateBlobOptions();
+        $this->filesystem->write('path/to/file2.txt', 'contents', [
+            'blobOptions' => $blobOptions
+        ]);
+        $this->assertNotEquals('text/plain', $this->azureClient->getBlobProperties('flysystem', 'path/to/file2.txt')->getProperties()->getContentType());
+
+    }
+
 
     /**
      * @after
