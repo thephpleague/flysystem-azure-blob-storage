@@ -64,6 +64,12 @@ class AzureBlobStorageAdapter extends AbstractAdapter
     {
         $destination = $this->applyPathPrefix($path);
 
+        $options = $this->getOptionsFromConfig($config);
+
+        if (empty($options->getContentType())) {
+            $options->setContentType(Util::guessMimeType($path, $contents));
+        }
+
         /**
          * We manually create the stream to prevent it from closing the resource
          * in its destructor.
@@ -73,7 +79,7 @@ class AzureBlobStorageAdapter extends AbstractAdapter
             $this->container,
             $destination,
             $contents,
-            $this->getOptionsFromConfig($config)
+            $options
         );
 
         $stream->detach();
