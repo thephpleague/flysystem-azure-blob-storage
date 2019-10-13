@@ -4,11 +4,14 @@ use GuzzleHttp\Psr7\Response;
 use League\Flysystem\AzureBlobStorage\AzureBlobStorageAdapter;
 use League\Flysystem\Filesystem;
 use MicrosoftAzure\Storage\Blob\BlobRestProxy;
+use MicrosoftAzure\Storage\Blob\Models\CreateBlockBlobOptions;
 use MicrosoftAzure\Storage\Common\Exceptions\ServiceException;
 use PHPUnit\Framework\TestCase;
 
 class AzureBlobStorageTest extends TestCase
 {
+    const CONTAINER_NAME = 'flysystem';
+
     /**
      * @var Filesystem
      */
@@ -30,7 +33,7 @@ class AzureBlobStorageTest extends TestCase
     public function setup_filesystem()
     {
         $this->azureClient = $client = BlobRestProxy::createBlobService(getenv('FLYSYSTEM_AZURE_CONNECTION_STRING'));
-        $adapter = new AzureBlobStorageAdapter($client, 'flysystem', 'root_directory');
+        $adapter = new AzureBlobStorageAdapter($client, self::CONTAINER_NAME, 'root_directory');
         $this->filesystem = new Filesystem($adapter);
         $this->filesystem->getConfig()->set('disable_asserts', true);
         $this->adapter = $adapter;
@@ -228,18 +231,13 @@ class AzureBlobStorageTest extends TestCase
      */
     public function pass_blob_options()
     {
-        $blobOptions = new \MicrosoftAzure\Storage\Blob\Models\CreateBlobOptions();
-        $blobOptions->setContentType('text/plain');
+        $blobOptions = new CreateBlockBlobOptions();
+        $blobOptions->setContentType('text/plain+custom');
         $this->filesystem->write('path/to/file.txt', 'contents', [
             'blobOptions' => $blobOptions
         ]);
-        $this->assertEquals('text/plain', $this->azureClient->getBlobProperties('flysystem', 'path/to/file.txt')->getProperties()->getContentType());
-        $blobOptions = new \MicrosoftAzure\Storage\Blob\Models\CreateBlobOptions();
-        $this->filesystem->write('path/to/file2.txt', 'contents', [
-            'blobOptions' => $blobOptions
-        ]);
-        $this->assertNotEquals('text/plain', $this->azureClient->getBlobProperties('flysystem', 'path/to/file2.txt')->getProperties()->getContentType());
-
+        $this->assertTrue($this->filesystem->has('path/to/file.txt'));
+        $this->assertEquals('text/plain+custom', $this->azureClient->getBlobProperties(self::CONTAINER_NAME, 'root_directory/path/to/file.txt')->getProperties()->getContentType());
     }
 
 
