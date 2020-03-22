@@ -50,6 +50,26 @@ class AzureBlobStorageAdapter extends AbstractAdapter
         $this->setPathPrefix($prefix);
     }
 
+    /**
+     * Get the AzureBlob container.
+     *
+     * @return string
+     */
+    public function getContainer()
+    {
+        return $this->container;
+    }
+
+    /**
+     * Get the BlobRestProxy instance.
+     *
+     * @return BlobRestProxy
+     */
+    public function getClient()
+    {
+        return $this->client;
+    }
+
     public function write($path, $contents, Config $config)
     {
         return $this->upload($path, $contents, $config) + compact('contents');
