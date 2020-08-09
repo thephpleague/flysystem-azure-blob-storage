@@ -2,7 +2,6 @@
 
 namespace League\Flysystem\AzureBlobStorage;
 
-use function GuzzleHttp\Psr7\stream_for;
 use League\Flysystem\Adapter\AbstractAdapter;
 use League\Flysystem\Adapter\Polyfill\NotSupportingVisibilityTrait;
 use League\Flysystem\Config;
@@ -14,8 +13,10 @@ use MicrosoftAzure\Storage\Blob\Models\CreateBlockBlobOptions;
 use MicrosoftAzure\Storage\Blob\Models\ListBlobsOptions;
 use MicrosoftAzure\Storage\Common\Exceptions\ServiceException;
 use MicrosoftAzure\Storage\Common\Models\ContinuationToken;
+
 use function array_merge;
 use function compact;
+use function GuzzleHttp\Psr7\stream_for;
 use function stream_get_contents;
 use function strpos;
 
@@ -85,10 +86,10 @@ class AzureBlobStorageAdapter extends AbstractAdapter
         $stream->detach();
 
         return [
-            'path'      => $path,
+            'path' => $path,
             'timestamp' => (int) $response->getLastModified()->getTimestamp(),
-            'dirname'   => Util::dirname($path),
-            'type'      => 'file',
+            'dirname' => Util::dirname($path),
+            'type' => 'file',
         ];
     }
 
@@ -176,8 +177,10 @@ class AzureBlobStorageAdapter extends AbstractAdapter
                 $location
             );
 
-            return $this->normalizeBlobProperties($path, $response->getProperties())
-                + ['stream' => $response->getContentStream()];
+            return $this->normalizeBlobProperties(
+                    $path,
+                    $response->getProperties()
+                ) + ['stream' => $response->getContentStream()];
         } catch (ServiceException $exception) {
             if ($exception->getCode() !== 404) {
                 throw $exception;
@@ -285,12 +288,12 @@ class AzureBlobStorageAdapter extends AbstractAdapter
         }
 
         return [
-            'path'      => $path,
+            'path' => $path,
             'timestamp' => (int) $properties->getLastModified()->format('U'),
-            'dirname'   => Util::dirname($path),
-            'mimetype'  => $properties->getContentType(),
-            'size'      => $properties->getContentLength(),
-            'type'      => 'file',
+            'dirname' => Util::dirname($path),
+            'mimetype' => $properties->getContentType(),
+            'size' => $properties->getContentLength(),
+            'type' => 'file',
         ];
     }
 
