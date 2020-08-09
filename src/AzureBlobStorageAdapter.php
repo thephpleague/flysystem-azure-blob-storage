@@ -38,11 +38,11 @@ class AzureBlobStorageAdapter extends AbstractAdapter
     /**
      * @var BlobRestProxy
      */
-    private $client;
+    protected $client;
 
-    private $container;
+    protected $container;
 
-    private $maxResultsForContentsListing = 5000;
+    protected $maxResultsForContentsListing = 5000;
 
     public function __construct(BlobRestProxy $client, $container, $prefix = null)
     {
