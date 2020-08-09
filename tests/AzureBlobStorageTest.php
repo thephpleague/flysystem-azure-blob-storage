@@ -32,7 +32,10 @@ class AzureBlobStorageTest extends TestCase
      */
     public function setup_filesystem()
     {
-        $this->azureClient = $client = BlobRestProxy::createBlobService(getenv('FLYSYSTEM_AZURE_CONNECTION_STRING'));
+        $accountKey = getenv('FLYSYSTEM_AZURE_ACCOUNT_KEY');
+        $accountName = getenv('FLYSYSTEM_AZURE_ACCOUNT_NAME');
+        $connectString = "DefaultEndpointsProtocol=https;AccountName={$accountName};AccountKey={$accountKey}==;EndpointSuffix=core.windows.net";
+        $this->azureClient = $client = BlobRestProxy::createBlobService($connectString);
         $adapter = new AzureBlobStorageAdapter($client, self::CONTAINER_NAME, 'root_directory');
         $this->filesystem = new Filesystem($adapter);
         $this->filesystem->getConfig()->set('disable_asserts', true);
