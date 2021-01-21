@@ -2,272 +2,173 @@
 
 namespace League\Flysystem\AzureBlobStorage;
 
-use League\Flysystem\Adapter\AbstractAdapter;
-use League\Flysystem\Adapter\Polyfill\NotSupportingVisibilityTrait;
+use GuzzleHttp\Psr7\Utils;
 use League\Flysystem\Config;
-use League\Flysystem\Util;
+use League\Flysystem\DirectoryAttributes;
+use League\Flysystem\FileAttributes;
+use League\Flysystem\FilesystemAdapter;
+use League\Flysystem\FilesystemOperationFailed;
+use League\Flysystem\UnableToCheckFileExistence;
+use League\Flysystem\UnableToDeleteDirectory;
+use League\Flysystem\UnableToDeleteFile;
+use League\Flysystem\UnableToMoveFile;
+use League\Flysystem\UnableToReadFile;
+use League\Flysystem\UnableToRetrieveMetadata;
+use League\Flysystem\UnableToSetVisibility;
+use League\MimeTypeDetection\FinfoMimeTypeDetector;
+use League\MimeTypeDetection\MimeTypeDetector;
 use MicrosoftAzure\Storage\Blob\BlobRestProxy;
-use MicrosoftAzure\Storage\Blob\Models\BlobPrefix;
 use MicrosoftAzure\Storage\Blob\Models\BlobProperties;
 use MicrosoftAzure\Storage\Blob\Models\CreateBlockBlobOptions;
 use MicrosoftAzure\Storage\Blob\Models\ListBlobsOptions;
 use MicrosoftAzure\Storage\Common\Exceptions\ServiceException;
 use MicrosoftAzure\Storage\Common\Models\ContinuationToken;
-
-use function array_merge;
-use function compact;
-use function GuzzleHttp\Psr7\stream_for;
 use function stream_get_contents;
 use function strpos;
 
-class AzureBlobStorageAdapter extends AbstractAdapter
+class AzureBlobStorageAdapter implements FilesystemAdapter
 {
-    use NotSupportingVisibilityTrait;
-
-    /**
-     * @var string[]
-     */
-    protected static $metaOptions = [
+    /** @var string[] */
+    private static $metaOptions = [
         'CacheControl',
         'ContentType',
         'Metadata',
         'ContentLanguage',
         'ContentEncoding',
     ];
-
-    /**
-     * @var BlobRestProxy
-     */
+    /** @var BlobRestProxy */
     private $client;
-
+    /** @var string */
     private $container;
+    /** @var MimeTypeDetector */
+    private $mimeTypeDetector;
+    /** @var int */
+    private $maxResultsForContentsListing;
 
-    private $maxResultsForContentsListing = 5000;
-
-    public function __construct(BlobRestProxy $client, $container, $prefix = null)
-    {
+    public function __construct(
+        BlobRestProxy $client,
+        $container,
+        MimeTypeDetector $mimeTypeDetector = null,
+        int $maxResultsForContentsListing = 5000
+    ) {
         $this->client = $client;
         $this->container = $container;
-        $this->setPathPrefix($prefix);
+        $this->mimeTypeDetector = $mimeTypeDetector ?: new FinfoMimeTypeDetector();
+        $this->maxResultsForContentsListing = $maxResultsForContentsListing;
     }
 
-    public function write($path, $contents, Config $config)
+    private function upload(string $destination, string $contents, Config $config): void
     {
-        return $this->upload($path, $contents, $config) + compact('contents');
-    }
-
-    public function writeStream($path, $resource, Config $config)
-    {
-        return $this->upload($path, $resource, $config);
-    }
-
-    protected function upload($path, $contents, Config $config)
-    {
-        $destination = $this->applyPathPrefix($path);
-
         $options = $this->getOptionsFromConfig($config);
 
         if (empty($options->getContentType())) {
-            $options->setContentType(Util::guessMimeType($path, $contents));
+            $options->setContentType($this->mimeTypeDetector->detectMimeType($destination, $contents));
         }
 
-        /**
-         * We manually create the stream to prevent it from closing the resource
-         * in its destructor.
-         */
-        $stream = stream_for($contents);
-        $response = $this->client->createBlockBlob(
+        $stream = Utils::streamFor($contents);
+        $this->client->createBlockBlob(
             $this->container,
             $destination,
             $contents,
             $options
         );
-
         $stream->detach();
-
-        return [
-            'path' => $path,
-            'timestamp' => (int) $response->getLastModified()->getTimestamp(),
-            'dirname' => Util::dirname($path),
-            'type' => 'file',
-        ];
     }
 
-    public function update($path, $contents, Config $config)
+    public function copy(string $source, string $destination, Config $config): void
     {
-        return $this->upload($path, $contents, $config) + compact('contents');
-    }
-
-    public function updateStream($path, $resource, Config $config)
-    {
-        return $this->upload($path, $resource, $config);
-    }
-
-    public function rename($path, $newpath)
-    {
-        return $this->copy($path, $newpath) && $this->delete($path);
-    }
-
-    public function copy($path, $newpath)
-    {
-        $source = $this->applyPathPrefix($path);
-        $destination = $this->applyPathPrefix($newpath);
         $this->client->copyBlob($this->container, $destination, $this->container, $source);
-
-        return true;
     }
 
-    public function delete($path)
+    public function delete(string $path): void
     {
         try {
-            $this->client->deleteBlob($this->container, $this->applyPathPrefix($path));
-        } catch (ServiceException $exception) {
-            if ($exception->getCode() !== 404) {
-                throw $exception;
-            }
+            $this->client->deleteBlob($this->container, $path);
+        } catch (\Throwable $exception) {
+            throw UnableToDeleteFile::atLocation($path, '', $exception);
         }
-
-        return true;
     }
 
-    public function deleteDir($dirname)
-    {
-        $prefix = $this->applyPathPrefix($dirname);
-        $options = new ListBlobsOptions();
-        $options->setPrefix($prefix . '/');
-        $listResults = $this->client->listBlobs($this->container, $options);
-        foreach ($listResults->getBlobs() as $blob) {
-            $this->client->deleteBlob($this->container, $blob->getName());
-        }
-
-        return true;
-    }
-
-    public function createDir($dirname, Config $config)
-    {
-        return ['path' => $dirname, 'type' => 'dir'];
-    }
-
-    public function has($path)
-    {
-        return $this->getMetadata($path);
-    }
-
-    public function read($path)
+    public function read(string $path): string
     {
         $response = $this->readStream($path);
 
-        if ( ! isset($response['stream']) || ! is_resource($response['stream'])) {
-            return $response;
-        }
-
-        $response['contents'] = stream_get_contents($response['stream']);
-        unset($response['stream']);
-
-        return $response;
+        return stream_get_contents($response['stream']);
     }
 
     public function readStream($path)
     {
-        $location = $this->applyPathPrefix($path);
-
         try {
             $response = $this->client->getBlob(
                 $this->container,
-                $location
+                $path
             );
 
-            return $this->normalizeBlobProperties(
-                    $path,
-                    $response->getProperties()
-                ) + ['stream' => $response->getContentStream()];
-        } catch (ServiceException $exception) {
-            if ($exception->getCode() !== 404) {
-                throw $exception;
-            }
-
-            return false;
+            return $response->getContentStream();
+        } catch (\Throwable $exception) {
+            throw UnableToReadFile::fromLocation($path);
         }
     }
 
-    public function listContents($directory = '', $recursive = false)
+    public function listContents(string $path, bool $deep = false): iterable
     {
-        $result = [];
-        $location = $this->applyPathPrefix($directory);
-
-        if (strlen($location) > 0) {
-            $location = rtrim($location, '/') . '/';
+        if (strlen($path) > 0) {
+            $path = rtrim($path, '/').'/';
         }
 
         $options = new ListBlobsOptions();
-        $options->setPrefix($location);
+        $options->setPrefix($path);
         $options->setMaxResults($this->maxResultsForContentsListing);
 
-        if ( ! $recursive) {
+        if (!$deep) {
             $options->setDelimiter('/');
         }
 
-        list_contents:
-        $response = $this->client->listBlobs($this->container, $options);
-        $continuationToken = $response->getContinuationToken();
-        foreach ($response->getBlobs() as $blob) {
-            $name = $blob->getName();
+        do {
+            $response = $this->client->listBlobs($this->container, $options);
+            $continuationToken = $response->getContinuationToken();
 
-            if ($location === '' || strpos($name, $location) === 0) {
-                $result[] = $this->normalizeBlobProperties($name, $blob->getProperties());
+            foreach ($response->getBlobs() as $blob) {
+                $name = $blob->getName();
+
+                if ($path === '' || strpos($name, $path) === 0) {
+                    yield $this->normalizeBlobProperties($name, $blob->getProperties());
+                }
             }
-        }
 
-        if ( ! $recursive) {
-            $result = array_merge($result, array_map([$this, 'normalizeBlobPrefix'], $response->getBlobPrefixes()));
-        }
-
-        if ($continuationToken instanceof ContinuationToken) {
+            if (!$deep) {
+                foreach ($response->getBlobPrefixes() as $blobPrefix) {
+                    yield new DirectoryAttributes(
+                        rtrim($blobPrefix->getName(), '/')
+                    );
+                }
+            }
             $options->setContinuationToken($continuationToken);
-            goto list_contents;
-        }
-
-        return Util::emulateDirectories($result);
+        } while (!$continuationToken instanceof ContinuationToken);
     }
 
-    public function getMetadata($path)
+    private function getMetadata($path): ?FileAttributes
     {
-        $path = $this->applyPathPrefix($path);
+        return $this->normalizeBlobProperties(
+            $path,
+            $this->client->getBlobProperties($this->container, $path)->getProperties()
+        );
+    }
 
+    public function getSize($path): FileAttributes
+    {
         try {
-            return $this->normalizeBlobProperties(
-                $path,
-                $this->client->getBlobProperties($this->container, $path)->getProperties()
-            );
-        } catch (ServiceException $exception) {
-            if ($exception->getCode() !== 404) {
-                throw $exception;
-            }
-
-            return false;
+            return $this->getMetadata($path);
+        } catch (\Throwable $exception) {
+            throw UnableToRetrieveMetadata::fileSize($path, '', $exception);
         }
     }
 
-    public function getSize($path)
-    {
-        return $this->getMetadata($path);
-    }
-
-    public function getMimetype($path)
-    {
-        return $this->getMetadata($path);
-    }
-
-    public function getTimestamp($path)
-    {
-        return $this->getMetadata($path);
-    }
-
-    protected function getOptionsFromConfig(Config $config)
+    private function getOptionsFromConfig(Config $config)
     {
         $options = $config->get('blobOptions', new CreateBlockBlobOptions());
-        foreach (static::$metaOptions as $option) {
-            if ( ! $config->has($option)) {
+        foreach (static::META_OPTIONS as $option) {
+            if (!$config->get($option)) {
                 continue;
             }
             call_user_func([$options, "set$option"], $config->get($option));
@@ -279,34 +180,111 @@ class AzureBlobStorageAdapter extends AbstractAdapter
         return $options;
     }
 
-    protected function normalizeBlobProperties($path, BlobProperties $properties)
+    private function normalizeBlobProperties($path, BlobProperties $properties): FileAttributes
     {
-        $path = $this->removePathPrefix($path);
+        return new FileAttributes(
+            $path,
+            $properties->getContentLength(),
+            null,
+            $properties->getLastModified()->getTimestamp(),
+            $properties->getContentType()
+        );
+    }
 
-        if (substr($path, -1) === '/') {
-            return ['type' => 'dir', 'path' => rtrim($path, '/')];
+    public function fileExists(string $path): bool
+    {
+        try {
+            return $this->getMetadata($path) !== null;
+        } catch (\Throwable $exception) {
+            if ($exception instanceof ServiceException && $exception->getCode() === 404) {
+                return false;
+            }
+            throw UnableToCheckFileExistence::forLocation($path, $exception);
         }
-
-        return [
-            'path' => $path,
-            'timestamp' => (int) $properties->getLastModified()->format('U'),
-            'dirname' => Util::dirname($path),
-            'mimetype' => $properties->getContentType(),
-            'size' => $properties->getContentLength(),
-            'type' => 'file',
-        ];
     }
 
-    /**
-     * @param int $numberOfResults
-     */
-    public function setMaxResultsForContentsListing($numberOfResults)
+    public function deleteDirectory(string $path): void
     {
-        $this->maxResultsForContentsListing = $numberOfResults;
+        try {
+            $options = new ListBlobsOptions();
+            $options->setPrefix($path.'/');
+            $listResults = $this->client->listBlobs($this->container, $options);
+            foreach ($listResults->getBlobs() as $blob) {
+                $this->client->deleteBlob($this->container, $blob->getName());
+            }
+        } catch (\Throwable $exception) {
+            UnableToDeleteDirectory::atLocation($path, '', $exception);
+        }
     }
 
-    protected function normalizeBlobPrefix(BlobPrefix $blobPrefix)
+    public function createDirectory(string $path, Config $config): void
     {
-        return ['type' => 'dir', 'path' => $this->removePathPrefix(rtrim($blobPrefix->getName(), '/'))];
+    }
+
+    public function setVisibility(string $path, string $visibility): void
+    {
+        UnableToSetVisibility::atLocation($path, 'Not supported');
+    }
+
+    public function visibility(string $path): FileAttributes
+    {
+        throw UnableToRetrieveMetadata::visibility($path, 'Not supported');
+    }
+
+    public function mimeType(string $path): FileAttributes
+    {
+        try {
+            return $this->getMetadata($path);
+        } catch (\Throwable $exception) {
+            throw UnableToRetrieveMetadata::mimeType($path, '', $exception);
+        }
+    }
+
+    public function lastModified(string $path): FileAttributes
+    {
+        try {
+            return $this->getMetadata($path);
+        } catch (\Throwable $exception) {
+            throw UnableToRetrieveMetadata::lastModified($path, '', $exception);
+        }
+    }
+
+    public function fileSize(string $path): FileAttributes
+    {
+        try {
+            return $this->getMetadata($path);
+        } catch (\Throwable $exception) {
+            throw UnableToRetrieveMetadata::fileSize($path, '', $exception);
+        }
+    }
+
+    public function move(string $source, string $destination, Config $config): void
+    {
+        try {
+            $this->copy($source, $destination, $config);
+            try {
+                $this->delete($source);
+            } catch (\Throwable $exception) {
+                try {
+                    $this->delete($destination);
+                } catch (\Throwable $inner) {
+                    // well... nothing we can do :(
+                } finally {
+                    throw $exception;
+                }
+            }
+        } catch (FilesystemOperationFailed $exception) {
+            throw UnableToMoveFile::fromLocationTo($source, $destination, $exception);
+        }
+    }
+
+    public function write(string $path, string $contents, Config $config): void
+    {
+        $this->upload($path, $contents, $config);
+    }
+
+    public function writeStream(string $path, $contents, Config $config): void
+    {
+        $this->upload($path, $contents, $config);
     }
 }
