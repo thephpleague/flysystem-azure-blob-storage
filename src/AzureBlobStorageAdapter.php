@@ -47,7 +47,7 @@ class AzureBlobStorageAdapter implements FilesystemAdapter
 
     public function __construct(
         BlobRestProxy $client,
-        $container,
+        string $container,
         MimeTypeDetector $mimeTypeDetector = null,
         int $maxResultsForContentsListing = 5000
     ) {
