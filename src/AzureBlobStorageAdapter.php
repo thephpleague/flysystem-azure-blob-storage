@@ -270,9 +270,9 @@ class AzureBlobStorageAdapter implements FilesystemAdapter
                     $this->delete($destination);
                 } catch (\Throwable $inner) {
                     // well... nothing we can do :(
-                } finally {
-                    throw $exception;
                 }
+
+                throw $exception;
             }
         } catch (FilesystemOperationFailed $exception) {
             throw UnableToMoveFile::fromLocationTo($source, $destination, $exception);
