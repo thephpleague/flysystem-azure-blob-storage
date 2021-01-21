@@ -93,7 +93,7 @@ class AzureBlobStorageAdapter implements FilesystemAdapter
     {
         $response = $this->readStream($path);
 
-        return stream_get_contents($response['stream']);
+        return stream_get_contents($response);
     }
 
     public function readStream($path)
