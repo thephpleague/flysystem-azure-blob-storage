@@ -167,7 +167,7 @@ class AzureBlobStorageAdapter implements FilesystemAdapter
     private function getOptionsFromConfig(Config $config)
     {
         $options = $config->get('blobOptions', new CreateBlockBlobOptions());
-        foreach (static::META_OPTIONS as $option) {
+        foreach (static::$metaOptions as $option) {
             if (!$config->get($option)) {
                 continue;
             }
