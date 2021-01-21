@@ -266,6 +266,7 @@ class AzureBlobStorageAdapter implements FilesystemAdapter
                 $this->delete($source);
             } catch (\Throwable $exception) {
                 try {
+                    // try to delete copied file.
                     $this->delete($destination);
                 } catch (\Throwable $inner) {
                     // well... nothing we can do :(
