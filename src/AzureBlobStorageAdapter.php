@@ -2,6 +2,7 @@
 
 namespace League\Flysystem\AzureBlobStorage;
 
+use GuzzleHttp\Psr7\Utils;
 use League\Flysystem\Adapter\AbstractAdapter;
 use League\Flysystem\Adapter\Polyfill\NotSupportingVisibilityTrait;
 use League\Flysystem\Config;
@@ -16,7 +17,6 @@ use MicrosoftAzure\Storage\Common\Models\ContinuationToken;
 
 use function array_merge;
 use function compact;
-use function GuzzleHttp\Psr7\stream_for;
 use function stream_get_contents;
 use function strpos;
 
@@ -75,7 +75,7 @@ class AzureBlobStorageAdapter extends AbstractAdapter
          * We manually create the stream to prevent it from closing the resource
          * in its destructor.
          */
-        $stream = stream_for($contents);
+        $stream = Utils::streamFor($contents);
         $response = $this->client->createBlockBlob(
             $this->container,
             $destination,
