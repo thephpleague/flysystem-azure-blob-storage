@@ -52,6 +52,7 @@ class AzureBlobStorageAdapter implements FilesystemAdapter, PublicUrlGenerator, 
         'Metadata',
         'ContentLanguage',
         'ContentEncoding',
+        'ContentDisposition',
     ];
     const ON_VISIBILITY_THROW_ERROR = 'throw';
     const ON_VISIBILITY_IGNORE = 'ignore';
